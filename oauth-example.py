@@ -31,6 +31,18 @@ wotkit = oauth.remote_app('wotkit',
 def get_wotkit_token(token=None):
     return session.get('wotkit_token')
 
+@app.route('/oauth-authorized')
+@wotkit.authorized_handler
+def oauth_authorized(resp):
+    if resp is None:
+        return 'Access denied: reason=%s error=%s' % (
+            request.args['error_reason'],
+            request.args['error_description']
+        )
+    session['wotkit_token'] = (resp['access_token'], '')
+    return redirect('/')
+
+
 @app.route('/login')
 def login():
     return wotkit.authorize(callback=url_for('oauth_authorized', _external=True))
@@ -42,16 +54,6 @@ def hello():
         return Response(json.dumps(users.data), content_type='application/json')
     return redirect(url_for('login'))
  
-@app.route('/oauth-authorized')
-@wotkit.authorized_handler
-def oauth_authorized(resp):
-    if resp is None:
-        return 'Access denied: reason=%s error=%s' % (
-            request.args['error_reason'],
-            request.args['error_description']
-        )
-    session['wotkit_token'] = (resp['access_token'], '')
-    return redirect('/')
 
 
 if __name__ == "__main__":
